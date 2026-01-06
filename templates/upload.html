@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Diagnosis Upload - CropCare AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- VISUAL THEME SETTINGS --- */
+        :root {
+            --glass-border: rgba(255, 255, 255, 0.2); /* Brighter border */
+            --primary-green: #2ecc71;
+            --primary-green-hover: #27ae60;
+            --accent-blue: #58a6ff; /* Brighter blue for text */
+            --text-main: #ffffff;
+            --text-secondary: #e6edf3; /* Very light gray, almost white */
+            --panel-bg: rgba(22, 27, 34, 0.95); /* Darker, less see-through for readability */
+        }
+        
+        body { 
+            margin: 0; 
+            background-color: #050505; /* Deep black background for contrast */
+            background-image: radial-gradient(circle at 50% 50%, #1a2e1a 0%, #000000 100%); /* Subtle green glow */
+            font-family: 'Inter', sans-serif; 
+            color: var(--text-main); 
+        }
+
+        .navbar { display: flex; justify-content: space-between; padding: 20px 40px; align-items: center; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); }
+        .logo { font-weight: 800; font-size: 1.4rem; color: var(--primary-green); text-decoration: none; text-shadow: 0 0 10px rgba(46, 204, 113, 0.4); }
+        .back-link { color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; font-weight: 600; }
+        .back-link:hover { color: var(--primary-green); }
+
+        .container { min-height: 90vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        
+        /* MAIN CARD */
+        .upload-card {
+            width: 100%; max-width: 1100px; padding: 40px; 
+            background: var(--panel-bg); 
+            border: 1px solid var(--glass-border); 
+            border-radius: 24px;
+            display: grid; grid-template-columns: 1fr 400px; gap: 40px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8); /* Strong shadow for depth */
+            backdrop-filter: blur(12px);
+        }
+        
+        /* DROPZONE (Left Side) */
+        .dropzone { 
+            height: 550px; 
+            border: 2px dashed rgba(255,255,255,0.3); 
+            border-radius: 24px; 
+            background: rgba(255,255,255,0.03); 
+            display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+            position: relative; overflow: hidden; 
+        }
+        .dropzone:hover { border-color: var(--primary-green); background: rgba(46, 204, 113, 0.05); }
+        .upload-icon { width: 64px; height: 64px; margin-bottom: 20px; color: #bbb; transition:0.3s; }
+        .dropzone:hover .upload-icon { color: var(--primary-green); transform: scale(1.1); }
+        
+        .upload-title { font-size: 1.6rem; font-weight: 800; color: white; margin-bottom: 8px; }
+        .upload-desc { font-size: 1rem; color: #aaa; }
+        
+        /* PREVIEW OVERLAY */
+        .preview-container { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #0d1117; /* Solid dark background so text doesn't overlap */
+            display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10;
+        }
+        .preview-img { width: 100%; height: 100%; object-fit: contain; }
+        .change-btn {
+            position: absolute; bottom: 20px; 
+            background: rgba(0,0,0,0.8); color: white; border: 1px solid white; 
+            padding: 10px 24px; border-radius: 30px; cursor: pointer; font-weight: 600;
+        }
+
+        /* SIDEBAR (Right Side) */
+        .sidebar { display: flex; flex-direction: column; gap: 20px; }
+        
+        /* INFO PANELS */
+        .info-panel { 
+            background: rgba(255, 255, 255, 0.07); /* Slightly brighter background for contrast */
+            padding: 25px; border-radius: 16px; 
+            border: 1px solid var(--glass-border); 
+        }
+        .panel-title { 
+            color: var(--accent-blue); 
+            font-size: 0.85rem; letter-spacing: 1.2px; margin-bottom: 15px; 
+            text-transform: uppercase; font-weight: 800; 
+        }
+        .tips-list { padding: 0; margin: 0; }
+        .tips-list li { 
+            list-style: none; margin-bottom: 12px; 
+            color: var(--text-secondary); /* HIGH CONTRAST TEXT */
+            font-size: 0.95rem; font-weight: 500;
+            display: flex; align-items: center; gap: 10px; 
+        }
+
+        /* ANALYZE BUTTON */
+        .btn-analyze {
+            width: 100%; padding: 20px; 
+            background: var(--primary-green); color: white; 
+            border: none; border-radius: 12px;
+            font-weight: 800; font-size: 1.1rem; letter-spacing: 0.5px;
+            cursor: pointer; transition: 0.3s; margin-top: auto;
+            box-shadow: 0 0 20px rgba(46, 204, 113, 0.3);
+        }
+        .btn-analyze:hover { background: var(--primary-green-hover); transform: translateY(-2px); box-shadow: 0 5px 25px rgba(46, 204, 113, 0.5); }
+        .btn-analyze:disabled { opacity: 0.6; cursor: wait; transform: none; }
+
+        /* RESULTS STYLING */
+        #result-content { display: none; animation: slideIn 0.4s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+        .result-class { font-size: 1.8rem; margin: 0; font-weight: 800; line-height: 1.2; color: white; }
+        
+        .result-badge { 
+            display: inline-block; padding: 6px 14px; border-radius: 20px; 
+            font-size: 0.85rem; font-weight: 700; margin-top: 8px; letter-spacing: 0.5px;
+        }
+        .badge-safe { background: rgba(46, 204, 113, 0.2); color: #4ade80; border: 1px solid #4ade80; }
+        .badge-danger { background: rgba(231, 76, 60, 0.2); color: #ff8a80; border: 1px solid #ff8a80; }
+
+        .advice-box {
+            margin-top: 20px; 
+            background: rgba(0, 0, 0, 0.3); 
+            padding: 15px; border-radius: 8px; border-left: 4px solid var(--primary-green);
+        }
+        .advice-text { color: #f0f0f0; font-size: 0.95rem; line-height: 1.6; margin: 0; }
+
+        .heatmap-preview {
+            width: 100%; border-radius: 12px; margin-top: 20px; 
+            border: 2px solid rgba(255,255,255,0.1); display: none;
+        }
+        
+        .reset-btn {
+            margin-top: 20px; background: transparent; 
+            border: 1px solid #666; color: #ddd; 
+            padding: 12px; width: 100%; border-radius: 8px; 
+            cursor: pointer; font-weight: 600; transition: 0.2s;
+        }
+        .reset-btn:hover { border-color: white; color: white; background: rgba(255,255,255,0.05); }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="{{ url_for('home') }}" class="logo">CropCare AI</a>
+        <a href="{{ url_for('home') }}" class="back-link">← Back to Home</a>
+    </nav>
+
+    <div class="container">
+        <div class="upload-card">
+            
+            <label class="dropzone" id="dropzone">
+                <input type="file" id="fileInput" accept="image/*" hidden>
+                
+                <svg class="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                </svg>
+
+                <div class="upload-title">Upload Leaf Image</div>
+                <div class="upload-desc">Drag & Drop or Click to Select</div>
+                
+                <div class="preview-container" id="previewContainer">
+                    <img id="previewImg" class="preview-img" alt="Leaf Preview">
+                    <div class="change-btn" onclick="document.getElementById('fileInput').click()">Change Image</div>
+                </div>
+            </label>
+
+            <div class="sidebar">
+                
+                <div id="intro-panel">
+                    <div class="info-panel">
+                        <div class="panel-title">Model Specs</div>
+                        <ul class="tips-list">
+                            <li><span style="color:var(--primary-green)">✔</span> EfficientNetB4 Architecture</li>
+                            <li><span style="color:var(--primary-green)">✔</span> 380x380 px Resolution</li>
+                            <li><span style="color:var(--primary-green)">✔</span> 90.60% High Accuracy</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="info-panel" style="margin-top: 20px;">
+                        <div class="panel-title">Instructions</div>
+                        <p style="color: #e0e0e0; font-size: 0.95rem; line-height: 1.6; margin: 0;">
+                            Please ensure the image is <strong>well-lit</strong> and the leaf is <strong>centered</strong>. 
+                            The AI will generate a heatmap to explain the diagnosis.
+                        </p>
+                    </div>
+                </div>
+
+                <div id="result-content">
+                    <div class="info-panel" style="background: rgba(46, 204, 113, 0.08); border-color: var(--primary-green);">
+                        <div class="panel-title">Analysis Result</div>
+                        
+                        <h2 id="res-class" class="result-class">...</h2>
+                        <span id="res-conf" class="result-badge badge-safe">0% Confidence</span>
+
+                        <div class="advice-box">
+                            <p style="color: #888; font-size: 0.8rem; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">AI Recommendation:</p>
+                            <p id="res-advice" class="advice-text">...</p>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 15px;">
+                        <p style="color: #aaa; font-size: 0.9rem; margin-bottom: 8px;">AI Vision Heatmap:</p>
+                        <img id="res-gradcam" class="heatmap-preview" alt="AI Heatmap">
+                    </div>
+
+                    <button class="reset-btn" onclick="location.reload()">Analyze Another Image</button>
+                </div>
+
+                <button id="analyzeBtn" class="btn-analyze">Run Diagnosis</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const dropzone = document.getElementById('dropzone');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewImg = document.getElementById('previewImg');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const introPanel = document.getElementById('intro-panel');
+        const resultContent = document.getElementById('result-content');
+
+        const API_URL = "{{ url_for('predict') }}";
+        let selectedFile = null;
+
+        // --- FILE HANDLING ---
+        fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+        dropzone.addEventListener('dragover', (e) => e.preventDefault());
+        dropzone.addEventListener('drop', (e) => { e.preventDefault(); handleFile(e.dataTransfer.files[0]); });
+
+        function handleFile(file) {
+            if (!file || !file.type.startsWith('image/')) return alert("Please upload a valid image file.");
+            selectedFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImg.src = e.target.result;
+                previewContainer.style.display = 'flex';
+                // Reset UI to initial state
+                resultContent.style.display = 'none';
+                introPanel.style.display = 'block';
+                analyzeBtn.style.display = 'block';
+                analyzeBtn.innerHTML = "Run Diagnosis";
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // --- API SUBMISSION ---
+        analyzeBtn.addEventListener('click', async () => {
+            if (!selectedFile) return alert("Please select an image first.");
+
+            analyzeBtn.disabled = true;
+            analyzeBtn.innerHTML = 'Analyzing Neural Network...';
+            
+            const formData = new FormData();
+            formData.append("image", selectedFile);
+
+            try {
+                const response = await fetch(API_URL, { method: "POST", body: formData });
+                const data = await response.json();
+
+                if (data.error) {
+                    alert("Error: " + data.error);
+                    analyzeBtn.disabled = false;
+                    analyzeBtn.innerHTML = "Run Diagnosis";
+                    return;
+                }
+
+                // 1. Switch Panels
+                introPanel.style.display = 'none';
+                analyzeBtn.style.display = 'none'; 
+                resultContent.style.display = 'block';
+
+                // 2. Populate Text
+                document.getElementById('res-class').innerText = data.predicted_class;
+                document.getElementById('res-conf').innerText = data.confidence_percent;
+                document.getElementById('res-advice').innerText = data.advice;
+
+                // 3. Status Badge Color
+                const badge = document.getElementById('res-conf');
+                const isHealthy = data.predicted_class.toLowerCase().includes('healthy');
+                badge.className = isHealthy ? 'result-badge badge-safe' : 'result-badge badge-danger';
+
+                // 4. Heatmap
+                if (data.gradcam_preview) {
+                    const heatImg = document.getElementById('res-gradcam');
+                    heatImg.src = data.gradcam_preview;
+                    heatImg.style.display = 'block';
+                    previewImg.src = data.gradcam_preview; // Also update main view
+                }
+
+            } catch (error) {
+                console.error(error);
+                alert("Server Connection Failed.");
+                analyzeBtn.disabled = false;
+                analyzeBtn.innerHTML = "Run Diagnosis";
+            }
+        });
+    </script>
+</body>
+</html>

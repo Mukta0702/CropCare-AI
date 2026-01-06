@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Analysis Report - CropCare AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        /* [Previous styles kept same] */
+        .dashboard-container { width: 100%; max-width: 1100px; background: #0a0a0a; border: 1px solid var(--glass-border); border-radius: 24px; padding: 40px; display: grid; grid-template-columns: 400px 1fr; gap: 50px; box-shadow: 0 50px 100px -20px rgba(0,0,0,0.8); margin: 50px auto; }
+        .scan-window { height: 450px; background: black; border-radius: 16px; position: relative; overflow: hidden; border: 1px solid var(--glass-border); }
+        
+        /* New Image Classes for Toggling */
+        .analyzed-img { width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0; transition: opacity 0.3s ease; }
+        
+        /* AI Vision Toggle Button */
+        .vision-btn {
+            position: absolute; bottom: 20px; right: 20px; z-index: 10;
+            background: rgba(0,0,0,0.8); color: white; border: 1px solid var(--accent-blue);
+            padding: 10px 20px; border-radius: 30px; cursor: pointer; font-weight: 600; font-size: 0.85rem;
+            display: flex; align-items: center; gap: 8px; backdrop-filter: blur(5px); transition: 0.3s;
+        }
+        .vision-btn:hover { background: var(--accent-blue); }
+        
+        /* Rest of styles [same as before]... */
+        body { background-color: var(--dark-bg); color: var(--clean-white); display: flex; align-items: center; justify-content: center; }
+        .overlay-badge { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.8); padding: 6px 14px; font-family: monospace; border-radius: 6px; font-size: 0.8rem; color: var(--primary-green); border: 1px solid var(--primary-green); z-index: 10; }
+        .data-panel { display: flex; flex-direction: column; justify-content: center; }
+        .label { color: #666; text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem; margin-bottom: 10px; }
+        .diagnosis-title { font-size: 3.5rem; font-weight: 900; line-height: 1; margin-bottom: 30px; color: white; }
+        .stats-grid { display: flex; gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: var(--glass-panel); padding: 20px; border-radius: 12px; border: 1px solid var(--glass-border); flex: 1; }
+        .stat-value { font-size: 1.8rem; font-weight: 700; color: var(--primary-green); }
+        .advice-box { background: rgba(255,255,255,0.03); border-left: 3px solid var(--primary-green); padding: 25px; color: #ccc; line-height: 1.6; font-size: 1rem; border-radius: 0 12px 12px 0; margin-bottom: 30px; }
+        .btn-reset { background: white; color: black; text-decoration: none; padding: 18px; text-align: center; font-weight: 800; border-radius: 12px; transition: 0.3s; display: block; }
+        .btn-reset:hover { background: var(--primary-green); }
+        @media (max-width: 900px) { .dashboard-container { grid-template-columns: 1fr; padding: 30px; } .scan-window { height: 300px; } }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        
+        <div class="scan-window">
+            <div class="overlay-badge" id="statusBadge">ANALYSIS COMPLETE</div>
+            
+            <img id="analyzedImage" class="analyzed-img" style="z-index: 2;">
+            
+            <img id="gradcamImage" class="analyzed-img" style="z-index: 1; opacity: 0;">
+
+            <button class="vision-btn" onclick="toggleHeatmap()">
+                <span>👁️ AI Vision</span>
+            </button>
+        </div>
+
+        <div class="data-panel">
+            <div class="label">FINAL REPORT</div>
+            <div class="diagnosis-title" id="diseaseName">Processing...</div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="label" style="color:var(--primary-green)">TEST ACCURACY</div>
+                    <div class="stat-value" id="finalAccuracy"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">PREDICTION CONFIDENCE</div>
+                    <div class="stat-value" id="confidenceScore">0%</div>
+                </div>
+            </div>
+
+            <div class="advice-box" id="adviceBox">
+                <div class="label" style="margin-bottom:10px;">RECOMMENDED TREATMENT</div>
+                <div class="advice-text" id="adviceText">Fetching advice...</div>
+            </div>
+
+            <a href="{{ url_for('upload_page') }}" class="btn-reset">Scan Another Sample</a>
+        </div>
+    </div>
+
+    <script>
+        // Toggle Logic for Heatmap
+        let isHeatmapVisible = false;
+        function toggleHeatmap() {
+            const normalImg = document.getElementById('analyzedImage');
+            const heatImg = document.getElementById('gradcamImage');
+            
+            // Safety check if backend didn't return heatmap
+            if (!heatImg.src || heatImg.src.includes('null')) {
+                alert("Heatmap visualization not available for this image.");
+                return;
+            }
+
+            if (isHeatmapVisible) {
+                // Show Normal
+                normalImg.style.opacity = 1;
+                heatImg.style.opacity = 0;
+            } else {
+                // Show Heatmap
+                normalImg.style.opacity = 0;
+                heatImg.style.opacity = 1;
+            }
+            isHeatmapVisible = !isHeatmapVisible;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const data = JSON.parse(sessionStorage.getItem("predictionResult"));
+            if (!data) { window.location.href = "{{ url_for('upload_page') }}"; return; }
+
+            // 1. Populate Images
+            document.getElementById('analyzedImage').src = data.image_preview;
+            // Set heatmap source if available
+            if(data.gradcam_preview) {
+                document.getElementById('gradcamImage').src = data.gradcam_preview;
+            }
+
+            // 2. Populate Text
+            document.getElementById('diseaseName').innerText = data.predicted_class;
+            document.getElementById('confidenceScore').innerText = (data.confidence * 100).toFixed(2) + "%";
+            document.getElementById('finalAccuracy').innerText = data.metrics.test_accuracy;
+            document.getElementById('adviceText').innerText = data.advice || "Follow good agricultural practice.";
+
+            // Fade in normal image
+            document.getElementById('analyzedImage').style.opacity = 1;
+
+            // 3. Dynamic Colors
+            const isHealthy = data.predicted_class.toLowerCase().includes('healthy');
+            const color = isHealthy ? 'var(--primary-green)' : 'var(--alert-red)';
+            const statusText = isHealthy ? 'HEALTHY DIAGNOSIS' : 'DISEASE DETECTED';
+            
+            document.getElementById('diseaseName').style.color = color;
+            document.getElementById('adviceBox').style.borderLeftColor = color;
+            document.querySelector('.stat-value').style.color = color; 
+            
+            const badge = document.getElementById('statusBadge');
+            badge.style.color = color;
+            badge.style.borderColor = color;
+            badge.innerHTML = statusText;
+        });
+    </script>
+</body>
+</html>
