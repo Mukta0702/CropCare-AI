@@ -30,7 +30,7 @@ CropCare AI is a web application that helps farmers identify crop diseases by up
 - **Inference latency:** <2 seconds per prediction via Flask REST API
 - Full training run and classification report available in `crop-care-model-training.ipynb`
 
----yes
+
 ## 🧠 Model Architecture
 
 Built using **TensorFlow & Keras** with transfer learning for stronger performance on a limited dataset.
