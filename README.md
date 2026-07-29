@@ -5,7 +5,7 @@
 ![TensorFlow](https://img.shields.io/badge/TensorFlow-2.x-orange)
 ![Flask](https://img.shields.io/badge/Flask-Backend-green)
 
-CropCare AI is a web application that helps farmers identify crop diseases by uploading leaf images. It uses a custom-trained **Convolutional Neural Network (CNN)** to classify diseases in **Potatoes, Tomatoes, and Peppers** with high accuracy.
+CropCare AI is a web application that helps farmers identify crop diseases by uploading leaf images. It uses a fine-tuned **EfficientNetB4** model (transfer learning) to classify diseases across **9 crop types — Apple, Cherry, Corn, Grape, Peach, Pepper, Potato, Strawberry, and Tomato** — with 91% test accuracy.
 
 ---
 
