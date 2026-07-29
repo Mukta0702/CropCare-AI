@@ -19,20 +19,26 @@ CropCare AI is a web application that helps farmers identify crop diseases by up
 | **Result Page** |
 <img width="1869" height="830" alt="image" src="https://github.com/user-attachments/assets/a40b323b-6af2-4890-9c4f-683a0c661fe1" />
 
+---
+
+## 📊 Model Performance
+
+- **Final Test Accuracy: 91%** (4,913 test images across 26 disease classes)
+- **Architecture:** EfficientNetB4 (transfer learning), fine-tuned on a curated PlantVillage subset
+- **Strongest classes:** Grape Leaf Blight, Corn Healthy, Grape Black Rot (all ≥99% F1-score)
+- **Known limitations:** Tomato Early Blight had lower recall (33%), often confused with Tomato/Potato Late Blight due to visual similarity in leaf lesions. Tomato-healthy and Cherry-healthy leaves were also frequently confused, suggesting the augmentation pipeline could better preserve species-specific leaf texture.
+- **Inference latency:** <2 seconds per prediction via Flask REST API
+- Full training run and classification report available in `crop-care-model-training.ipynb`
+
+---yes
 ## 🧠 Model Architecture
-The model was built from scratch using **TensorFlow & Keras**.
 
-* **Model Type:** Custom Sequential CNN
-* **Layers:** * Multiple **Conv2D** layers for feature extraction.
-    * **MaxPooling2D** layers for dimensionality reduction.
-    * **Flatten** & **Dense** layers for classification.
-    * **Dropout** layers to prevent overfitting.
-* **Dataset:** Trained on a curated subset of the **PlantVillage Dataset**.
-* **Classes Supported:**
-    * **Potato:** Early Blight, Late Blight, Healthy
-    * **Tomato:** Bacterial Spot, Early Blight, Late Blight, Healthy, etc.
-    * **Pepper:** Bacterial Spot, Healthy
+Built using **TensorFlow & Keras** with transfer learning for stronger performance on a limited dataset.
 
+* **Model Type:** EfficientNetB4 (pretrained on ImageNet) with a custom classification head
+* **Approach:** Transfer learning — the pretrained EfficientNetB4 base extracts features, with **Dense** and **Dropout** layers added on top for the 26-class classification task
+* **Dataset:** Trained on a curated subset of the **PlantVillage Dataset** — 22,812 training images, 4,880 validation images, 4,913 test images
+* **Classes Supported:** 26 disease/healthy classes across **Apple, Cherry, Corn, Grape, Peach, Pepper, Potato, Strawberry, and Tomato**
 ---
 
 ## 🛠️ Tech Stack
