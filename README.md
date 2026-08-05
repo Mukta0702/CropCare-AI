@@ -5,7 +5,12 @@
 ![TensorFlow](https://img.shields.io/badge/TensorFlow-2.x-orange)
 ![Flask](https://img.shields.io/badge/Flask-Backend-green)
 
-CropCare AI is a web application that helps farmers identify crop diseases by uploading leaf images. It uses a fine-tuned **EfficientNetB4** model (transfer learning) to classify diseases across **9 crop types — Apple, Cherry, Corn, Grape, Peach, Pepper, Potato, Strawberry, and Tomato** — with 91% test accuracy.
+CropCare AI is a web application that helps farmers identify crop diseases by uploading leaf images. It uses a fine-tuned **EfficientNetB4** model (transfer learning) to classify diseases across **9 crop types — Apple, Cherry, Corn, Grape, Peach, Pepper, Potato, Strawberry, and Tomato**.
+
+## 📊 Results
+- **Test Accuracy:** 91%
+- **Disease Classes:** 26
+- **Inference latency:** <2 seconds per prediction via Flask REST API
 
 ---
 
@@ -27,9 +32,7 @@ CropCare AI is a web application that helps farmers identify crop diseases by up
 - **Architecture:** EfficientNetB4 (transfer learning), fine-tuned on a curated PlantVillage subset
 - **Strongest classes:** Grape Leaf Blight, Corn Healthy, Grape Black Rot (all ≥99% F1-score)
 - **Known limitations:** Tomato Early Blight had lower recall (33%), often confused with Tomato/Potato Late Blight due to visual similarity in leaf lesions. Tomato-healthy and Cherry-healthy leaves were also frequently confused, suggesting the augmentation pipeline could better preserve species-specific leaf texture.
-- **Inference latency:** <2 seconds per prediction via Flask REST API
 - Full training run and classification report available in `crop-care-model-training.ipynb`
-
 
 ## 🧠 Model Architecture
 
